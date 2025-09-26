@@ -1,0 +1,50 @@
+# Cloud Build config to build and push the frontend with a runtime-configurable API base
+# Usage:
+#   gcloud builds submit . \
+#     --config=cloudbuild.yaml \
+#     --substitutions=_API_BASE=https://rcm-backend-xxxxxxxx-uc.a.run.app,_REGION=us-central1,_REPO=rcm
+#
+# Then deploy the pushed image to Cloud Run:
+#   gcloud run deploy rcm-frontend \
+#     --image ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/rcm-frontend:latest \
+#     --region ${_REGION} --allow-unauthenticated
+
+substitutions:
+  _API_BASE: "https://example.com"   # override in command
+  _REGION: "us-central1"             # override if needed
+  _REPO: "rcm"                       # artifact registry repo name
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+  # Ensure the Artifact Registry repository exists (ignore error if it already exists)
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -lc
+      - |
+        gcloud artifacts repositories describe ${_REPO} --location=${_REGION} >/dev/null 2>&1 || \
+        gcloud artifacts repositories create ${_REPO} \
+          --repository-format=docker \
+          --location=${_REGION} \
+          --description="RCM frontend images"
+
+  # Build the Docker image with the API base injected as a build arg
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - "--build-arg"
+      - "VITE_API_BASE=${_API_BASE}"
+      - "-t"
+      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/rcm-frontend:latest"
+      - "."
+
+  # Push the image to Artifact Registry
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/rcm-frontend:latest"
+
+images:
+  - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/rcm-frontend:latest"
