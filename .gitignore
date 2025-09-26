@@ -1,0 +1,17 @@
+# Node / React frontend
+node_modules/
+dist/
+build/
+.cache/
+.vite/
+*.log
+.env
+.env.*
+
+# Editor/OS
+.DS_Store
+.vscode/
+.idea/
+
+# TypeScript
+*.tsbuildinfo
