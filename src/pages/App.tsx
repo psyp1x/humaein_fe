@@ -3,11 +3,12 @@ import { Login } from './Login'
 import { Dashboard } from './Dashboard'
 import { Toaster } from '../components/ui/toaster'
 import { Register } from './Register'
+import { Tenants } from './Tenants'
 
 export function App() {
   const [token, setToken] = useState<string | null>(null)
   const [tenant, setTenant] = useState('demo')
-  const [route, setRoute] = useState<'login'|'register'|'app'>('login')
+  const [route, setRoute] = useState<'login'|'register'|'app'|'tenants'>('login')
 
   useEffect(() => {
     const saved = localStorage.getItem('rcm_token')
@@ -33,7 +34,8 @@ export function App() {
   }
   return (
     <>
-      <Dashboard token={token} tenant={tenant} setTenant={setTenant} />
+      {route === 'app' && <Dashboard token={token} tenant={tenant} setTenant={setTenant} goTenants={() => setRoute('tenants')} />}
+      {route === 'tenants' && <Tenants token={token} tenant={tenant} setTenant={(t) => { setTenant(t); localStorage.setItem('rcm_tenant', t); setRoute('app') }} goBack={() => setRoute('app')} />}
       <Toaster />
     </>
   )

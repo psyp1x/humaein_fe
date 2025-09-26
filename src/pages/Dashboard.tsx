@@ -10,7 +10,7 @@ import { showToast } from '../lib/toast'
 type Metric = { metric_date: string; error_category: string; claim_count: number; paid_amount_aed: number }
 type Claim = { id: number; claim_id: string; status: string; error_type: string; error_explanation: string; recommended_action: string; paid_amount_aed: number }
 
-export function Dashboard({ token, tenant, setTenant }: { token: string; tenant: string; setTenant: (t: string) => void }) {
+export function Dashboard({ token, tenant, setTenant, goTenants }: { token: string; tenant: string; setTenant: (t: string) => void; goTenants: () => void }) {
   const [metrics, setMetrics] = useState<Metric[]>([])
   const [claims, setClaims] = useState<Claim[]>([])
   const [configYaml, setConfigYaml] = useState<string>('')
@@ -114,21 +114,9 @@ export function Dashboard({ token, tenant, setTenant }: { token: string; tenant:
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-semibold">Dashboard</h2>
         <div className="flex items-center gap-2">
-          <Input className="w-[220px]" value={tenant} onChange={(e) => { setTenant(e.target.value); localStorage.setItem('rcm_tenant', e.target.value) }} placeholder="Tenant" />
-          <Button
-            disabled={!tenant || !!busy}
-            onClick={async () => {
-              try {
-                setBusy('Ensuring tenant...')
-                await api.post('/tenants/', { name: tenant }, { headers: { Authorization: `Bearer ${token}` } })
-                showToast({ title: 'Tenant ensured', variant: 'success' })
-              } catch (e: any) {
-                showToast({ title: 'Ensure tenant failed', description: e?.response?.data?.detail || e?.message || 'Unknown error', variant: 'destructive' })
-              } finally {
-                setBusy('')
-              }
-            }}
-          >Ensure Tenant</Button>
+          <span className="text-sm text-muted-foreground">Tenant</span>
+          <span className="text-sm px-2 py-1 rounded-md border bg-background">{tenant}</span>
+          <Button variant="outline" onClick={goTenants}>Tenants</Button>
         </div>
       </div>
 
@@ -157,38 +145,6 @@ export function Dashboard({ token, tenant, setTenant }: { token: string; tenant:
           </CardContent>
         </Card>
         <Card>
-          <CardHeader>
-            <CardTitle>Rules Config Preview</CardTitle>
-            <div className="text-sm text-muted-foreground">Merged YAML/PDF-derived config currently applied for this tenant.</div>
-          </CardHeader>
-          <CardContent>
-            {configYaml ? (
-              <div className="space-y-3">
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground mb-1">YAML</div>
-                  <pre className="max-h-48 overflow-auto rounded-md bg-muted p-3 text-sm whitespace-pre-wrap">{configYaml}</pre>
-                </div>
-                {configJson && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                    <div className="rounded-md border p-3">
-                      <div className="font-medium mb-1">Technical</div>
-                      <div>min_paid_for_approval: {configJson?.technical?.min_paid_for_approval ?? '—'}</div>
-                      <div>required_fields: {(configJson?.technical?.required_fields || []).join(', ') || '—'}</div>
-                    </div>
-                    <div className="rounded-md border p-3">
-                      <div className="font-medium mb-1">Medical</div>
-                      <div>disallowed_service_codes: {(configJson?.medical?.disallowed_service_codes || []).join(', ') || '—'}</div>
-                      <div>required_dx_for_service: {configJson?.medical?.required_dx_for_service ? Object.keys(configJson.medical.required_dx_for_service).length : 0} mappings</div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="text-sm text-muted-foreground">No rules config uploaded yet.</div>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
           <CardHeader><CardTitle>Technical Rules</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             <Input accept=".yaml,.yml,.csv,.xlsx,application/pdf" type="file" onChange={(e) => e.target.files && uploadSmart(e.target.files[0], 'technical')} />
@@ -200,6 +156,39 @@ export function Dashboard({ token, tenant, setTenant }: { token: string; tenant:
           <CardContent className="space-y-2">
             <Input accept=".yaml,.yml,.csv,.xlsx,application/pdf" type="file" onChange={(e) => e.target.files && uploadSmart(e.target.files[0], 'medical')} />
             <div className="text-xs text-muted-foreground">Accepted: YAML, CSV, XLSX, PDF (auto-routed)</div>
+          </CardContent>
+        </Card>
+        {/* Full-width Rules Config Preview below uploads */}
+        <Card className="md:col-span-2 lg:col-span-3">
+          <CardHeader>
+            <CardTitle>Rules Config Preview</CardTitle>
+            <div className="text-sm text-muted-foreground">Merged YAML/PDF-derived config currently applied for this tenant.</div>
+          </CardHeader>
+          <CardContent>
+            {configYaml ? (
+              <div className="space-y-3">
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-1">YAML</div>
+                  <pre className="max-h-48 overflow-x-auto overflow-y-auto rounded-md bg-muted p-3 text-sm whitespace-pre-wrap break-words">{configYaml}</pre>
+                </div>
+                {configJson && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <div className="rounded-md border p-3 break-words">
+                      <div className="font-medium mb-1">Technical</div>
+                      <div>min_paid_for_approval: {configJson?.technical?.min_paid_for_approval ?? '—'}</div>
+                      <div>required_fields: {(configJson?.technical?.required_fields || []).join(', ') || '—'}</div>
+                    </div>
+                    <div className="rounded-md border p-3 break-words">
+                      <div className="font-medium mb-1">Medical</div>
+                      <div>disallowed_service_codes: {(configJson?.medical?.disallowed_service_codes || []).join(', ') || '—'}</div>
+                      <div>required_dx_for_service: {configJson?.medical?.required_dx_for_service ? Object.keys(configJson.medical.required_dx_for_service).length : 0} mappings</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground">No rules config uploaded yet.</div>
+            )}
           </CardContent>
         </Card>
         <Card className="md:col-span-2 lg:col-span-3">
