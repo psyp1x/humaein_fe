@@ -15,14 +15,16 @@ export function Dashboard({ token, tenant, setTenant, goTenants }: { token: stri
   const [claims, setClaims] = useState<Claim[]>([])
   const [configYaml, setConfigYaml] = useState<string>('')
   const [configJson, setConfigJson] = useState<any>(null)
+  const [effectiveJson, setEffectiveJson] = useState<any>(null)
   const [busy, setBusy] = useState<string>('')
   const [llm, setLlm] = useState<{enabled:boolean; model:string; has_api_key:boolean} | null>(null)
 
   async function fetchConfigPreview() {
     try {
       const resp = await api.get('/tenants/config', { headers: authHeaders(token, tenant) })
-      setConfigYaml(resp.data?.config_yaml || '')
-      setConfigJson(resp.data?.config_json || null)
+  setConfigYaml(resp.data?.config_yaml || '')
+  setConfigJson(resp.data?.config_json || null)
+  setEffectiveJson(resp.data?.effective_json || null)
     } catch {
       setConfigYaml('')
       setConfigJson(null)
@@ -171,18 +173,24 @@ export function Dashboard({ token, tenant, setTenant, goTenants }: { token: stri
                   <div className="text-sm font-medium text-muted-foreground mb-1">YAML</div>
                   <pre className="max-h-48 overflow-x-auto overflow-y-auto rounded-md bg-muted p-3 text-sm whitespace-pre-wrap break-words">{configYaml}</pre>
                 </div>
-                {configJson && (
+                {(configJson || effectiveJson) && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                     <div className="rounded-md border p-3 break-words">
                       <div className="font-medium mb-1">Technical</div>
-                      <div>min_paid_for_approval: {configJson?.technical?.min_paid_for_approval ?? '—'}</div>
-                      <div>required_fields: {(configJson?.technical?.required_fields || []).join(', ') || '—'}</div>
+                      <div>min_paid_for_approval: {configJson?.technical?.min_paid_for_approval ?? effectiveJson?.technical?.min_paid_for_approval ?? '—'}</div>
+                      <div>required_fields: {((configJson?.technical?.required_fields || effectiveJson?.technical?.required_fields) || []).join(', ') || '—'}</div>
                     </div>
                     <div className="rounded-md border p-3 break-words">
                       <div className="font-medium mb-1">Medical</div>
-                      <div>disallowed_service_codes: {(configJson?.medical?.disallowed_service_codes || []).join(', ') || '—'}</div>
-                      <div>required_dx_for_service: {configJson?.medical?.required_dx_for_service ? Object.keys(configJson.medical.required_dx_for_service).length : 0} mappings</div>
+                      <div>disallowed_service_codes: {(configJson?.medical?.disallowed_service_codes || effectiveJson?.medical?.disallowed_service_codes || []).join(', ') || '—'}</div>
+                      <div>required_dx_for_service: {(configJson?.medical?.required_dx_for_service || effectiveJson?.medical?.required_dx_for_service) ? Object.keys((configJson?.medical?.required_dx_for_service || effectiveJson?.medical?.required_dx_for_service)).length : 0} mappings</div>
                     </div>
+                  </div>
+                )}
+                {effectiveJson?.llm && (
+                  <div className="rounded-md border p-3 text-sm break-words">
+                    <div className="font-medium mb-1">LLM</div>
+                    <div>outlier_thresholds: {effectiveJson?.llm?.outlier_thresholds ? Object.keys(effectiveJson.llm.outlier_thresholds).length : 0} entries</div>
                   </div>
                 )}
               </div>
