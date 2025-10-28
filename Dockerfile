@@ -12,12 +12,18 @@ COPY . .
 # Build with the provided VITE_ env
 RUN npm run build
 
-# Install serve for production static serving
-RUN npm install -g serve
+# Install nginx
+RUN apk add --no-cache nginx
 
-# Railway sets PORT dynamically
+# Copy built files to nginx html dir
+RUN cp -r dist/* /usr/share/nginx/html/
+
+# Copy nginx config
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Expose port
 EXPOSE 8080
 
 # Ensure runtime also has the API base (vite build embeds it)
 ENV VITE_API_BASE=${VITE_API_BASE}
-CMD ["sh", "-c", "serve -s dist -l $PORT --host 0.0.0.0"]
+CMD ["nginx", "-g", "daemon off;"]
