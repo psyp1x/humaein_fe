@@ -15,6 +15,9 @@ RUN npm run build
 # Install nginx
 RUN apk add --no-cache nginx
 
+# Create nginx html dir
+RUN mkdir -p /usr/share/nginx/html/
+
 # Copy built files to nginx html dir
 RUN cp -r dist/* /usr/share/nginx/html/
 
