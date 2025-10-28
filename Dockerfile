@@ -12,8 +12,8 @@ COPY . .
 # Build with the provided VITE_ env
 RUN npm run build
 
-# Install nginx
-RUN apk add --no-cache nginx
+# Install nginx and gettext for envsubst
+RUN apk add --no-cache nginx gettext
 
 # Create nginx html dir
 RUN mkdir -p /usr/share/nginx/html/
@@ -21,12 +21,12 @@ RUN mkdir -p /usr/share/nginx/html/
 # Copy built files to nginx html dir
 RUN cp -r dist/* /usr/share/nginx/html/
 
-# Copy nginx config
-COPY nginx.conf /etc/nginx/nginx.conf
+# Copy nginx config template
+COPY nginx.conf /etc/nginx/nginx.conf.template
 
 # Expose port
 EXPOSE 8080
 
 # Ensure runtime also has the API base (vite build embeds it)
 ENV VITE_API_BASE=${VITE_API_BASE}
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["sh", "-c", "envsubst < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"]
