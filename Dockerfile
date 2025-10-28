@@ -24,13 +24,9 @@ RUN cp -r dist/* /usr/share/nginx/html/
 # Copy nginx config
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Copy start script
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
-
 # Expose port
 EXPOSE 5173
 
 # Ensure runtime also has the API base (vite build embeds it)
 ENV VITE_API_BASE=${VITE_API_BASE}
-CMD ["/start.sh"]
+CMD ["nginx", "-g", "daemon off;"]
