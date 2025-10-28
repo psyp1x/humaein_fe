@@ -1,18 +1,12 @@
 FROM node:20-alpine
 WORKDIR /app
 
-# Accept API base at build time for Vite
-ARG VITE_API_BASE
-ENV VITE_API_BASE=${VITE_API_BASE}
-
-RUN echo "VITE_API_BASE=$VITE_API_BASE" > .env
-
 COPY package.json package-lock.json* ./
 RUN npm ci || npm i
 COPY . .
 
 # Build with the provided VITE_ env
-RUN npm run build
+RUN VITE_API_BASE=$VITE_API_BASE npm run build
 
 # Install nginx and gettext for envsubst
 RUN apk add --no-cache nginx gettext
