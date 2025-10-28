@@ -24,9 +24,13 @@ RUN cp -r dist/* /usr/share/nginx/html/
 # Copy nginx config template
 COPY nginx.conf /etc/nginx/nginx.conf.template
 
+# Copy start script
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
 # Expose port
 EXPOSE 8080
 
 # Ensure runtime also has the API base (vite build embeds it)
 ENV VITE_API_BASE=${VITE_API_BASE}
-CMD ["sh", "-c", "envsubst '${PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"]
+CMD ["/start.sh"]
