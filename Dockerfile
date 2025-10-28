@@ -5,7 +5,7 @@ WORKDIR /app
 ARG VITE_API_BASE
 ENV VITE_API_BASE=${VITE_API_BASE}
 
-RUN echo "VITE_API_BASE is $VITE_API_BASE"
+RUN echo "VITE_API_BASE=$VITE_API_BASE" > .env
 
 COPY package.json package-lock.json* ./
 RUN npm ci || npm i
@@ -30,5 +30,5 @@ COPY nginx.conf /etc/nginx/nginx.conf
 EXPOSE 5173
 
 # Ensure runtime also has the API base (vite build embeds it)
-ENV VITE_API_BASE=${VITE_API_BASE}
+# ENV VITE_API_BASE=${VITE_API_BASE}
 CMD ["nginx", "-g", "daemon off;"]
