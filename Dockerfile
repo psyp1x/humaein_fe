@@ -5,6 +5,8 @@ WORKDIR /app
 ARG VITE_API_BASE
 ENV VITE_API_BASE=${VITE_API_BASE}
 
+RUN echo "VITE_API_BASE is $VITE_API_BASE"
+
 COPY package.json package-lock.json* ./
 RUN npm ci || npm i
 COPY . .
