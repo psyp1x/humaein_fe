@@ -12,9 +12,12 @@ COPY . .
 # Build with the provided VITE_ env
 RUN npm run build
 
+# Install serve for production static serving
+RUN npm install -g serve
+
 # Railway sets PORT dynamically
 EXPOSE 8080
 
-# Ensure runtime also has the API base (vite preview only uses built assets, but env kept for clarity)
+# Ensure runtime also has the API base (vite build embeds it)
 ENV VITE_API_BASE=${VITE_API_BASE}
-CMD ["npm", "start"]
+CMD ["sh", "-c", "serve -s dist -l $PORT"]
