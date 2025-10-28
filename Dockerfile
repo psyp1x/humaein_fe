@@ -20,4 +20,4 @@ EXPOSE 8080
 
 # Ensure runtime also has the API base (vite build embeds it)
 ENV VITE_API_BASE=${VITE_API_BASE}
-CMD ["sh", "-c", "serve -s dist -l $PORT"]
+CMD ["sh", "-c", "serve -s dist -l 0.0.0.0:$PORT"]
